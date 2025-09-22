@@ -4,10 +4,14 @@ import { spawn } from "child_process";
 import * as path from "path";
 import { mcserver, tekkitserver } from "./launchServer";
 import { RCON } from "minecraft-server-util";
+import { config } from "../config";
 
 async function stopMinecraftRcon() {
   const rcon = new RCON();
-  await rcon.connect("212.85.84.70", 25575);
+  await rcon.connect("localhost", 25575)
+  if (!config.rcon)
+      throw new Error("rcon not defined in config.");
+  await rcon.login(config.rcon)
   await rcon.run("stop");
   await rcon.close();
 }
