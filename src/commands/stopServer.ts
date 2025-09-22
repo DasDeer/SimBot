@@ -7,7 +7,7 @@ import { RCON } from "minecraft-server-util";
 
 async function stopMinecraftRcon() {
   const rcon = new RCON();
-  await rcon.connect("localhost", 25575);
+  await rcon.connect("212.85.84.70", 25575);
   await rcon.run("stop");
   await rcon.close();
 }
