@@ -27,6 +27,7 @@ function stopServer(game: string): string {
     case "minecraft":
       if (mcserver && mcserver.stdin.writable) {
         mcserver.stdin.write("stop\n");
+        mcserver.stdin.end();
         return "Sent stop command to Minecraft server!";
       }
       return "Minecraft server is not running or not tracked!";
@@ -36,6 +37,7 @@ function stopServer(game: string): string {
     case "tekkit":
       if (tekkitserver && tekkitserver.stdin.writable) {
         tekkitserver.stdin.write("stop\n");
+        tekkitserver.stdin.end();
         return "Sent stop command to Tekkit server!";
       }
       return "Tekkit server is not running or not tracked!";
