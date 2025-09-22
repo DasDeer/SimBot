@@ -3,6 +3,14 @@ import { CommandInteraction, SlashCommandBuilder, ChatInputCommandInteraction } 
 import { spawn } from "child_process";
 import * as path from "path";
 import { mcserver, tekkitserver } from "./launchServer";
+import { RCON } from "minecraft-server-util";
+
+async function stopMinecraftRcon() {
+  const rcon = new RCON();
+  await rcon.connect("localhost", 25575);
+  await rcon.run("stop");
+  await rcon.close();
+}
 
 
 export const data = new SlashCommandBuilder()
@@ -26,8 +34,7 @@ function stopServer(game: string): string {
   switch (game) {
     case "minecraft":
       if (mcserver && mcserver.stdin.writable) {
-        mcserver.stdin.write("stop\n");
-        mcserver.stdin.end();
+        stopMinecraftRcon();
         return "Sent stop command to Minecraft server!";
       }
       return "Minecraft server is not running or not tracked!";
