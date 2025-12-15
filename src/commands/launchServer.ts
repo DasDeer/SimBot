@@ -57,9 +57,8 @@ export const data = new SlashCommandBuilder()
       });
       return "Tekkit server started!";
     case "factorio":
-      factorioProcess = spawn(
-        "bin/x64/factorio.exe",
-        ["--start-server", "C:\\Users\\Min dator\\AppData\\Roaming\\Factorio\\saves"],
+      factorioProcess = spawn("cmd.exe",
+        ["/C", '"C:\\Factorio Server\\bin\\x64\\factorio.exe" --start-server "C:\\Users\\Min dator\\AppData\\Roaming\\Factorio\\saves"'],
       {
       cwd: factorio_location,
       detached: true,
