@@ -59,7 +59,7 @@ export const data = new SlashCommandBuilder()
     case "factorio":
       factorioProcess = spawn(
         "bin/x64/factorio.exe",
-        ["--start-server", "saves/SimBot_Server.zip"],
+        ["--start-server", "C:\\Users\\Min dator\\AppData\\Roaming\\Factorio\\saves"],
       {
       cwd: factorio_location,
       detached: true,
@@ -72,7 +72,7 @@ export const data = new SlashCommandBuilder()
   factorioProcess.on("exit", () => {
     factorioProcess = null;
   });
-  
+
       return "Factorio server started!";
     default:
       return "Unknown server!";

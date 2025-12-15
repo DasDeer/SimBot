@@ -28,7 +28,6 @@ export const data = new SlashCommandBuilder()
       .addChoices(
         { name: "Minecraft", value: "minecraft" },
         { name: "Valheim", value: "valheim" },
-        { name: "Tekkit", value: "tekkit" },
         { name: "Factorio", value: "factorio" }
       )
   );
@@ -50,13 +49,6 @@ function stopServer(game: string): string {
         factorioProcess.kill("SIGTERM");
         return "Sent stop command to Factorio server!";
       }
-    case "tekkit":
-      if (tekkitserver && tekkitserver.stdin.writable) {
-        tekkitserver.stdin.write("stop\n");
-        tekkitserver.stdin.end();
-        return "Sent stop command to Tekkit server!";
-      }
-      return "Tekkit server is not running or not tracked!";
     default:
       return "Unknown server!";
   }
