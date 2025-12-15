@@ -8,7 +8,6 @@ import * as path from "path";
 let minecraft_location = "C:\\Users\\Min dator\\OneDrive\\Dokument\\Servers\\Minecraft";
 let valheim_location = "C:\\Users\\Min dator\\OneDrive\\Dokument\\Servers\\Valheim\\server";
 let tekkit_location = "C:\\Users\\Min dator\\OneDrive\\Dokument\\Servers\\Tekkit";
-let factorio_location = "C:\\Factorio Server";
 
 export let mcserver: import("child_process").ChildProcessWithoutNullStreams | null = null;
 export let tekkitserver: import("child_process").ChildProcessWithoutNullStreams | null = null;
@@ -57,17 +56,29 @@ export const data = new SlashCommandBuilder()
       });
       return "Tekkit server started!";
     case "factorio":
-const factorioProcess = spawn(
+factorioProcess = spawn(
   "C:\\FactorioServer\\bin\\x64\\factorio.exe",
   ["--start-server", "C:\\Users\\Min dator\\AppData\\Roaming\\Factorio\\saves\\SimBot_Server.zip"],
   { cwd: "C:\\FactorioServer", detached: true, stdio: "inherit", windowsHide: false }
 );
    factorioProcess.unref();
 
+     factorioProcess.on("exit", () => {
+    factorioProcess = null;
+  });
       return "Factorio server started!";
     default:
       return "Unknown server!";
   }
+}
+
+export function stopFactorio(): string {
+  if (!factorioProcess) return "Server is not running.";
+
+  factorioProcess.kill("SIGTERM");
+  factorioProcess = null;
+
+  return "🛑 Factorio server stopping...";
 }
 
 export async function execute(interaction: CommandInteraction) {
