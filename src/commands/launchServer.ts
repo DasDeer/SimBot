@@ -67,7 +67,8 @@ export const data = new SlashCommandBuilder()
           cwd: factorio_location,
           detached: true,
           stdio: "inherit", // inherit shows the CMD output
-          windowsHide: false // false so CMD window is visible
+          windowsHide: false, // false so CMD window is visible
+          shell: true 
         }
 );
    factorioProcess.unref();
