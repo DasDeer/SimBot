@@ -2,7 +2,7 @@
 import { CommandInteraction, SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
 import { spawn } from "child_process";
 import * as path from "path";
-import { mcserver, tekkitserver } from "./launchServer";
+import { mcserver, tekkitserver, factorioProcess } from "./launchServer";
 import { RCON } from "minecraft-server-util";
 import { config } from "../config";
 
@@ -45,6 +45,11 @@ function stopServer(game: string): string {
     case "valheim":
       spawn("taskkill", ["/im", "valheim_server.exe", "/f"]);
       return "Sent kill command to Valheim server!";
+    case "factorio":
+      if (factorioProcess) {
+        factorioProcess.kill("SIGTERM");
+        return "Sent stop command to Factorio server!";
+      }
     case "tekkit":
       if (tekkitserver && tekkitserver.stdin.writable) {
         tekkitserver.stdin.write("stop\n");

@@ -1,16 +1,19 @@
 
 import { CommandInteraction, SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
-import { spawn } from "child_process";
+import { spawn, type ChildProcess  } from "child_process";
+
 import * as path from "path";
 
 
 let minecraft_location = "C:\\Users\\Min dator\\OneDrive\\Dokument\\Servers\\Minecraft";
 let valheim_location = "C:\\Users\\Min dator\\OneDrive\\Dokument\\Servers\\Valheim\\server";
 let tekkit_location = "C:\\Users\\Min dator\\OneDrive\\Dokument\\Servers\\Tekkit";
-let factorio_location = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Factorio";
+let factorio_location = "C:\\Factorio Server";
 
 export let mcserver: import("child_process").ChildProcessWithoutNullStreams | null = null;
 export let tekkitserver: import("child_process").ChildProcessWithoutNullStreams | null = null;
+export let factorioProcess: ChildProcess | null = null;
+
 
 
 
@@ -25,7 +28,6 @@ export const data = new SlashCommandBuilder()
       .addChoices(
         { name: "Minecraft", value: "minecraft" },
         { name: "Valheim", value: "valheim" },
-        { name: "Tekkit", value: "tekkit" },
         { name: "Factorio", value: "factorio" }
       )
   );
@@ -55,11 +57,22 @@ export const data = new SlashCommandBuilder()
       });
       return "Tekkit server started!";
     case "factorio":
-      spawn("factorio.exe", [], {
-        cwd: factorio_location,
-        detached: true,
-        stdio: "ignore"
-      });
+      factorioProcess = spawn(
+        "bin/x64/factorio.exe",
+        ["--start-server", "saves/SimBot_Server.zip"],
+      {
+      cwd: factorio_location,
+      detached: true,
+      stdio: "ignore",
+      windowsHide: true
+    }
+) as ChildProcess;
+   factorioProcess.unref();
+
+  factorioProcess.on("exit", () => {
+    factorioProcess = null;
+  });
+  
       return "Factorio server started!";
     default:
       return "Unknown server!";
