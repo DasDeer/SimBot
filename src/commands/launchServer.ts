@@ -58,14 +58,9 @@ export const data = new SlashCommandBuilder()
       return "Tekkit server started!";
     case "factorio":
 const factorioProcess = spawn(
-  `start "factorio server" "C:\\FactorioServer\\bin\\x64\\factorio.exe" --start-server "C:\\Users\\Min dator\\AppData\\Roaming\\Factorio\\saves\\SimBot_Server.zip"`,
-  {
-    cwd: "C:\\FactorioServer",
-    detached: true,
-    stdio: "inherit",
-    windowsHide: false,
-    shell: true  // <-- important
-  }
+  "C:\\FactorioServer\\bin\\x64\\factorio-headless.exe",
+  ["--start-server", "C:\\Users\\Min dator\\AppData\\Roaming\\Factorio\\saves\\SimBot_Server.zip"],
+  { cwd: "C:\\FactorioServer", detached: true, stdio: "inherit", windowsHide: false }
 );
    factorioProcess.unref();
 
