@@ -57,19 +57,15 @@ export const data = new SlashCommandBuilder()
       });
       return "Tekkit server started!";
     case "factorio":
-      const factorioProcess: ChildProcess = spawn(
-        "cmd.exe",
-        [
-          "/k", // run command then exit
-          `"C:\\FactorioServer\\bin\\x64\\factorio.exe" --start-server "C:\\Users\\Min dator\\AppData\\Roaming\\Factorio\\saves\\SimBot_Server.zip"`
-        ],
-        {
-          cwd: factorio_location,
-          detached: true,
-          stdio: "inherit", // inherit shows the CMD output
-          windowsHide: false, // false so CMD window is visible
-          shell: true 
-        }
+const factorioProcess = spawn(
+  `"C:\\FactorioServer\\bin\\x64\\factorio.exe" --start-server "C:\\Users\\Min dator\\AppData\\Roaming\\Factorio\\saves\\SimBot_Server.zip"`,
+  {
+    cwd: "C:\\FactorioServer",
+    detached: true,
+    stdio: "inherit",
+    windowsHide: false,
+    shell: true  // <-- important
+  }
 );
    factorioProcess.unref();
 
