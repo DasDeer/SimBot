@@ -60,7 +60,7 @@ export const data = new SlashCommandBuilder()
       const factorioProcess: ChildProcess = spawn(
         "cmd.exe",
         [
-          "/c", // run command then exit
+          "/k", // run command then exit
           `"${factorio_location}\\bin\\x64\\factorio.exe" --start-server "C:\\Users\\Min dator\\AppData\\Roaming\\Factorio\\saves\\SimBot_Server.zip"`
         ],
         {
