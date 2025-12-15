@@ -78,7 +78,7 @@ export function stopFactorio(): string {
   factorioProcess.kill("SIGTERM");
   factorioProcess = null;
 
-  return "🛑 Factorio server stopping...";
+  return "Factorio server stopping.";
 }
 
 export async function execute(interaction: CommandInteraction) {
