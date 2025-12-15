@@ -61,7 +61,7 @@ export const data = new SlashCommandBuilder()
         "cmd.exe",
         [
           "/k", // run command then exit
-          `"${factorio_location}\\bin\\x64\\factorio.exe" --start-server "C:\\Users\\Min dator\\AppData\\Roaming\\Factorio\\saves\\SimBot_Server.zip"`
+          `"C:\\Factorio Server\\bin\\x64\\factorio.exe" --start-server "C:\\Users\\Min dator\\AppData\\Roaming\\Factorio\\saves\\SimBot_Server.zip"`
         ],
         {
           cwd: factorio_location,
