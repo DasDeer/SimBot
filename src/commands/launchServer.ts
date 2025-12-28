@@ -58,7 +58,7 @@ export const data = new SlashCommandBuilder()
     case "factorio":
 factorioProcess = spawn(
   "C:\\FactorioServer\\bin\\x64\\factorio.exe",
-  ["--start-server", "C:\\Users\\Min dator\\AppData\\Roaming\\Factorio\\saves\\SimBot_Server.zip"],
+  ["--start-server", "C:\\Users\\Min dator\\AppData\\Roaming\\Factorio\\saves\\SimBot_Server.zip", "--port 42345"],
   { cwd: "C:\\FactorioServer", detached: true, stdio: "inherit", windowsHide: false }
 );
    factorioProcess.unref();

@@ -42,7 +42,7 @@ export async function ip(game: string): Promise<string> {
     case "tekkit":
       return `IP: ${ip}`;
     case "factorio":
-      return `IP: ${ip}:34197 Password: bajsbajs`;
+      return `IP: ${ip}:42345 Password: bajsbajs`;
     default:
       return "Unknown game!";
   }
