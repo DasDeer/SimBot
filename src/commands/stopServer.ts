@@ -7,14 +7,21 @@ import { stopFactorio, clearMinecraft, clearMinecraft2 } from "./launchServer";
 import { RCON } from "minecraft-server-util";
 import { config } from "../config";
 
-async function stopMinecraftRcon() {
+async function stopMinecraftRcon(MCInstant: "minecraft" | "minecraft2") {
   const rcon = new RCON();
-  await rcon.connect("localhost", 25575)
+  if(MCInstant === "minecraft") {
+    await rcon.connect("localhost", 25575)
+  }
+    if(MCInstant === "minecraft2") {
+    await rcon.connect("localhost", 53422)
+  }
+
   if (!config.rcon)
       throw new Error("rcon not defined in config.");
+
   await rcon.login(config.rcon)
   await rcon.run("stop");
-  await rcon.close();
+  rcon.close();
 }
 
 
@@ -39,7 +46,7 @@ function stopServer(game: string): string {
   switch (game) {
     case "minecraft":
       if (mcserver && mcserver.stdin.writable) {
-        stopMinecraftRcon();
+        stopMinecraftRcon("minecraft");
         clearMinecraft();
         return "Sent stop command to Minecraft server!";
 
@@ -48,7 +55,7 @@ function stopServer(game: string): string {
 
     case "minecraft2":
       if (mcserver2 && mcserver2.stdin.writable) {
-        stopMinecraftRcon();
+        stopMinecraftRcon("minecraft2");
         clearMinecraft2();
         return "Sent stop command to Minecraft server!";
       }
