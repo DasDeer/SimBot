@@ -37,9 +37,6 @@ export const data = new SlashCommandBuilder()
   function startServer(game: string): string {
   switch (game) {
     case "minecraft":
-      if (mcserver2) {
-        return "Cannot start Minecraft: Minecraft2 is already running!";
-      }
       mcserver = spawn("java.exe", ["-jar", "server.jar"], {
         cwd: minecraft_location,
         detached: true,
@@ -48,9 +45,6 @@ export const data = new SlashCommandBuilder()
       return "Minecraft server started!";
 
       case "minecraft2":
-      if (mcserver) {
-        return "Cannot start Minecraft2: Minecraft is already running!";
-      }
       mcserver2 = spawn("java.exe", ["-jar", "server.jar"], {
         cwd: minecraft2_location,
         detached: true,
