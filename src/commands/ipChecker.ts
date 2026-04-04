@@ -24,8 +24,8 @@ export const data = new SlashCommandBuilder()
       .setRequired(false)
       .addChoices(
         { name: "Minecraft", value: "minecraft" },
+        { name: "Minecraft2", value: "minecraft2" },
         { name: "Valheim", value: "valheim" },
-        { name: "Tekkit", value: "tekkit" },
         { name: "Factorio", value: "factorio" }
       )
   );
@@ -36,11 +36,11 @@ export async function ip(game: string): Promise<string> {
   const ip = await getPublicIP();
   switch (game) {
     case "minecraft":
-      return `IP: ${ip} Password: drgodis`;
+      return `IP: ${ip}:48657 Password: drgodis`;
+    case "minecraft2":
+      return `IP: ${ip}:48657 Password: drgodis`;
     case "valheim":
       return `IP: ${ip}:2456 Password: bajsbajs`;
-    case "tekkit":
-      return `IP: ${ip}`;
     case "factorio":
       return `IP: ${ip}:42345 Password: bajsbajs`;
     default:

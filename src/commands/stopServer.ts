@@ -2,7 +2,7 @@
 import { CommandInteraction, SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
 import { spawn } from "child_process";
 import * as path from "path";
-import { mcserver, tekkitserver, factorioProcess } from "./launchServer";
+import { mcserver, tekkitserver, factorioProcess, mcserver2 } from "./launchServer";
 import {stopFactorio} from "./launchServer";
 import { RCON } from "minecraft-server-util";
 import { config } from "../config";
@@ -28,6 +28,7 @@ export const data = new SlashCommandBuilder()
       .setRequired(false)
       .addChoices(
         { name: "Minecraft", value: "minecraft" },
+        { name: "Minecraft2", value: "minecraft2" },
         { name: "Valheim", value: "valheim" },
         { name: "Factorio", value: "factorio" }
       )
@@ -42,6 +43,14 @@ function stopServer(game: string): string {
         return "Sent stop command to Minecraft server!";
       }
       return "Minecraft server is not running or not tracked!";
+
+    case "minecraft2":
+      if (mcserver2 && mcserver2.stdin.writable) {
+        stopMinecraftRcon();
+        return "Sent stop command to Minecraft server!";
+      }
+      return "Minecraft server is not running or not tracked!";
+
     case "valheim":
       spawn("taskkill", ["/im", "valheim_server.exe", "/f"]);
       return "Sent kill command to Valheim server!";

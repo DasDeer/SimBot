@@ -6,10 +6,12 @@ import * as path from "path";
 
 
 let minecraft_location = "C:\\Users\\Min dator\\OneDrive\\Dokument\\Servers\\Minecraft";
+let minecraft2_location = "C:\\Users\\Min dator\\OneDrive\\Dokument\\Servers\\Minecraft2";
 let valheim_location = "C:\\Users\\Min dator\\OneDrive\\Dokument\\Servers\\Valheim\\server";
 let tekkit_location = "C:\\Users\\Min dator\\OneDrive\\Dokument\\Servers\\Tekkit";
 
 export let mcserver: import("child_process").ChildProcessWithoutNullStreams | null = null;
+export let mcserver2: import("child_process").ChildProcessWithoutNullStreams | null = null;
 export let tekkitserver: import("child_process").ChildProcessWithoutNullStreams | null = null;
 export let factorioProcess: ChildProcess | null = null;
 
@@ -26,6 +28,7 @@ export const data = new SlashCommandBuilder()
       .setRequired(false)
       .addChoices(
         { name: "Minecraft", value: "minecraft" },
+        { name: "Minecraft2", value: "minecraft2" },
         { name: "Valheim", value: "valheim" },
         { name: "Factorio", value: "factorio" }
       )
@@ -36,6 +39,14 @@ export const data = new SlashCommandBuilder()
     case "minecraft":
       mcserver = spawn("java.exe", ["-jar", "server.jar"], {
         cwd: minecraft_location,
+        detached: true,
+        stdio: "pipe"
+      });
+      return "Minecraft server started!";
+
+      case "minecraft2":
+      mcserver2 = spawn("java.exe", ["-jar", "server.jar"], {
+        cwd: minecraft2_location,
         detached: true,
         stdio: "pipe"
       });
