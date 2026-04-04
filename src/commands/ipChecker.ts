@@ -38,7 +38,7 @@ export async function ip(game: string): Promise<string> {
     case "minecraft":
       return `IP: ${ip}:48657 Password: drgodis`;
     case "minecraft2":
-      return `IP: ${ip}:48657 Password: drgodis`;
+      return `IP: ${ip}:48658 Password: drgodis`;
     case "valheim":
       return `IP: ${ip}:2456 Password: bajsbajs`;
     case "factorio":
