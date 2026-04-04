@@ -3,7 +3,7 @@ import { CommandInteraction, SlashCommandBuilder, ChatInputCommandInteraction } 
 import { spawn } from "child_process";
 import * as path from "path";
 import { mcserver, tekkitserver, factorioProcess, mcserver2 } from "./launchServer";
-import {stopFactorio} from "./launchServer";
+import { stopFactorio, clearMinecraft, clearMinecraft2 } from "./launchServer";
 import { RCON } from "minecraft-server-util";
 import { config } from "../config";
 
@@ -40,13 +40,16 @@ function stopServer(game: string): string {
     case "minecraft":
       if (mcserver && mcserver.stdin.writable) {
         stopMinecraftRcon();
+        clearMinecraft();
         return "Sent stop command to Minecraft server!";
+
       }
       return "Minecraft server is not running or not tracked!";
 
     case "minecraft2":
       if (mcserver2 && mcserver2.stdin.writable) {
         stopMinecraftRcon();
+        clearMinecraft2();
         return "Sent stop command to Minecraft server!";
       }
       return "Minecraft server is not running or not tracked!";

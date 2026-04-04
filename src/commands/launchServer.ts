@@ -37,6 +37,9 @@ export const data = new SlashCommandBuilder()
   function startServer(game: string): string {
   switch (game) {
     case "minecraft":
+      if (mcserver2) {
+        return "Cannot start Minecraft: Minecraft2 is already running!";
+      }
       mcserver = spawn("java.exe", ["-jar", "server.jar"], {
         cwd: minecraft_location,
         detached: true,
@@ -45,12 +48,15 @@ export const data = new SlashCommandBuilder()
       return "Minecraft server started!";
 
       case "minecraft2":
+      if (mcserver) {
+        return "Cannot start Minecraft2: Minecraft is already running!";
+      }
       mcserver2 = spawn("java.exe", ["-jar", "server.jar"], {
         cwd: minecraft2_location,
         detached: true,
         stdio: "pipe"
       });
-      return "Minecraft server started!";
+      return "Minecraft2 server started!";
 
     case "valheim":
       spawn("cmd.exe", ["/C", "start", "cmd.exe", "/K", "start_headless_server.bat"], {
@@ -90,6 +96,14 @@ export function stopFactorio(): string {
   factorioProcess = null;
 
   return "Factorio server stopping.";
+}
+
+export function clearMinecraft(): void {
+  mcserver = null;
+}
+
+export function clearMinecraft2(): void {
+  mcserver2 = null;
 }
 
 export async function execute(interaction: CommandInteraction) {
