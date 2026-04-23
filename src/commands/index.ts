@@ -4,6 +4,8 @@ import * as launchServer from "./launchServer";
 import * as stopServer from "./stopServer";
 import * as grandExchange from "./grandExchange";
 import * as weather from "./weather";
+import * as randomDuck from "./randomDuck";
+import * as randomCat from "./randomcat";
 
 // Export commands by their .data.name property
 export const commands = [
@@ -12,5 +14,7 @@ export const commands = [
   launchServer,
   stopServer,
   grandExchange,
-  weather
+  weather,
+  randomDuck,
+  randomCat
 ];
