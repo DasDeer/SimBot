@@ -51,12 +51,8 @@ export const data = new SlashCommandBuilder()
         itemMappingCache![item.id] = item;
       });
       
-      // Log first item to see structure
-      if (data.length > 0) {
-        console.log("Sample item from mapping:", JSON.stringify(data[0], null, 2));
-      }
-      
       return itemMappingCache;
+      
     } catch (error) {
       console.error("Failed to fetch item mapping:", error);
       return null;
@@ -70,21 +66,13 @@ export const data = new SlashCommandBuilder()
       if (!mapping) {
         return interaction.reply("Failed to fetch item data. Please try again later.");
       }
-      
       const itemDetails = mapping[itemId];
-      if (!itemDetails) {
-        return interaction.reply(`Item with ID ${itemId} not found in OSRS.`);
-      }
-      
+
       // Construct icon URL
       const iconUrl = itemDetails.icon ? `https://oldschool.runescape.wiki/images/${encodeURIComponent(itemDetails.icon.replace(/ /g, "_"))}` : undefined;
-      console.log(`Item: ${itemDetails.name}`);
-      console.log(`Icon filename: ${itemDetails.icon}`);
-      console.log(`Icon URL: ${iconUrl}`);
 
       // Get current prices
       const priceUrl = `https://prices.runescape.wiki/api/v1/osrs/latest?id=${itemId}`;
-      console.log(`Fetching prices from: ${priceUrl}`);
       const priceResponse = await fetch(priceUrl);
       
       let high = 0;
