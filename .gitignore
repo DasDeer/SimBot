@@ -1,0 +1,8 @@
+# Ignore local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Ignore dependency and build output
+node_modules/
+dist/
