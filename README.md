@@ -30,7 +30,6 @@ npm install
 ```env
 DISCORD_TOKEN=your_discord_token
 DISCORD_CLIENT_ID=your_discord_application_id
-GUILD_ID=your_discord_guild_id
 
 RCON_PASSWORD=your_rcon_password
 MINECRAFT_PASSWORD=your_minecraft_password
@@ -69,7 +68,7 @@ npm run build
 ## Notes
 
 - `.env` is intentionally ignored by Git so secrets do not get published.
-- The bot deploys slash commands to the configured guild when it starts.
+- The bot deploys global slash commands when it starts. Discord may take up to an hour to propagate command changes.
 - Server paths and ports are expected to be valid for your machine and runtime environment.
 
 ## Project scripts

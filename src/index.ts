@@ -7,13 +7,9 @@ const client = new Client({
   intents: ["Guilds", "GuildMessages", "DirectMessages", "GuildMembers"],
 });
 
-client.once("clientReady", () => {
+client.once("clientReady", async () => {
   console.log("SimBot is ready! 🤖");
-});
-
-
-client.on("guildCreate", async (guild) => {
-  await deployCommands({ guildId: guild.id });
+  await deployCommands();
 });
 
 // Build a map of command name to command module
