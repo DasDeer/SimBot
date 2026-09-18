@@ -53,13 +53,30 @@ FACTORIO_SERVER_SAVE=C:\path\to\save.zip
 FACTORIO_SERVER_CWD=C:\path\to\factorio
 ```
 
-3. Start the bot in development mode:
+3. Copy `src/utils/guildCommands.json` to `src/utils/guildCommands.local.json`, then edit the local file with each guild's commands:
+
+```json
+[
+	{
+		"guildId": "your_first_guild_id",
+		"commands": ["startserver", "stopserver", "ip"]
+	},
+	{
+		"guildId": "your_second_guild_id",
+		"commands": ["weather", "cat", "duck"]
+	}
+]
+```
+
+`guildCommands.local.json` is ignored by Git because it contains private guild IDs. It is the file loaded by the bot at runtime.
+
+4. Start the bot in development mode:
 
 ```bash
 npm run dev
 ```
 
-4. Build for production:
+5. Build for production:
 
 ```bash
 npm run build
@@ -68,7 +85,9 @@ npm run build
 ## Notes
 
 - `.env` is intentionally ignored by Git so secrets do not get published.
-- The bot deploys global slash commands when it starts. Discord may take up to an hour to propagate command changes.
+- The bot deploys guild-specific slash commands when it starts. Guild commands usually update quickly.
+- Commands are deployed per guild. Leave a guild's command list empty to disable all commands there, or add another entry to configure another guild.
+- Supported command names are `friday`, `ip`, `startserver`, `stopserver`, `grand-exchange`, `weather`, `duck`, and `cat`.
 - Server paths and ports are expected to be valid for your machine and runtime environment.
 
 ## Project scripts

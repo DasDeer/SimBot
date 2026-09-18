@@ -1,0 +1,10 @@
+[
+  {
+    "guildId": "your_first_guild_id",
+    "commands": ["startserver", "stopserver", "ip"]
+  },
+  {
+    "guildId": "your_second_guild_id",
+    "commands": ["weather", "cat", "duck"]
+  }
+]

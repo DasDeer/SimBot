@@ -1,2 +1,3 @@
 # Ignore environment variable files
 .env
+src/utils/guildCommands.local.json

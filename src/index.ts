@@ -1,5 +1,5 @@
 import { Client } from "discord.js";
-import { deployCommands } from "./deploy-commands";
+import { deployCommands, getCommandsForGuild } from "./deploy-commands";
 import { commands } from "./commands";
 import { config } from "./config";
 
@@ -19,6 +19,17 @@ client.on("interactionCreate", async interaction => {
   if (!interaction.isChatInputCommand()) return;
   const command = commandMap.get(interaction.commandName);
   if (!command) return;
+
+  if (!interaction.guildId || !getCommandsForGuild(interaction.guildId).some(
+    configuredCommand => configuredCommand.name === interaction.commandName
+  )) {
+    await interaction.reply({
+      content: "This command is not enabled in this server.",
+      flags: 64
+    });
+    return;
+  }
+
   try {
     await command.execute(interaction);
   } catch (error) {
