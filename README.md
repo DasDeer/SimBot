@@ -86,7 +86,7 @@ npm run build
 
 - `.env` is intentionally ignored by Git so secrets do not get published.
 - The bot deploys guild-specific slash commands when it starts. Guild commands usually update quickly.
-- Commands are deployed per guild. Leave a guild's command list empty to disable all commands there, or add another entry to configure another guild.
+- Commands are deployed per guild. Leave a guild's command list empty to enable all commands there, or list specific commands to limit the guild's commands.
 - Supported command names are `friday`, `ip`, `startserver`, `stopserver`, `grand-exchange`, `weather`, `duck`, and `cat`.
 - Server paths and ports are expected to be valid for your machine and runtime environment.
 

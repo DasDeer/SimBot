@@ -11,6 +11,7 @@ const commandDataByName = new Map(
 export function getCommandsForGuild(guildId: string) {
   const guild = config.guilds.find(configuredGuild => configuredGuild.id === guildId);
   if (!guild) return [];
+  if (guild.commands.length === 0) return [...commandDataByName.values()];
 
   return guild.commands
     .map(commandName => commandDataByName.get(commandName))
