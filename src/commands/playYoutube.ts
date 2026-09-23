@@ -13,7 +13,7 @@ import {
 import ffmpegPath from "ffmpeg-static";
 import { spawn } from "child_process";
 import ytDlp from "youtube-dl-exec";
-import { registerAudioSession, unregisterAudioSession } from "./playAudio";
+import { isAudioPlaying, registerAudioSession, unregisterAudioSession } from "./playAudio";
 
 function isYoutubeUrl(value: string): boolean {
   try {
@@ -49,6 +49,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   if (!guildId || !guild) {
     await interaction.reply("This command can only be used in a server.");
+    return;
+  }
+  if (isAudioPlaying(guildId)) {
+    await interaction.deferReply();
+    await interaction.deleteReply();
     return;
   }
   if (!isYoutubeUrl(url)) {
@@ -88,7 +93,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     "-ac", "2",
     "pipe:1"
   ], { stdio: ["pipe", "pipe", "ignore"] });
-  const session = { connection, player, ffmpeg, source };
+  const session = { connection, player, ffmpeg, source, interaction };
 
   try {
     source.stdout?.on("error", error => {
@@ -104,7 +109,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     source.stdout?.pipe(ffmpeg.stdin!);
     connection.subscribe(player);
     if (!registerAudioSession(guildId, session)) {
-      await interaction.editReply("Audio is already playing in this server.");
+      await interaction.deleteReply();
       return;
     }
 

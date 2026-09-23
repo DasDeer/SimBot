@@ -12,6 +12,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 
   await interaction.deferReply();
-  stopAudio(interaction.guildId);
+  await stopAudio(interaction.guildId);
   await interaction.deleteReply();
 }

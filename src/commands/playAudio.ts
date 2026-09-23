@@ -44,10 +44,15 @@ export type AudioSession = {
   connection: ReturnType<typeof joinVoiceChannel>;
   player: ReturnType<typeof createAudioPlayer>;
   ffmpeg: ReturnType<typeof spawn>;
+  interaction: ChatInputCommandInteraction;
   source?: ChildProcess;
 };
 
 const activeAudioSessions = new Map<string, AudioSession>();
+
+export function isAudioPlaying(guildId: string): boolean {
+  return activeAudioSessions.has(guildId);
+}
 
 export function registerAudioSession(guildId: string, session: AudioSession): boolean {
   if (activeAudioSessions.has(guildId)) return false;
@@ -75,12 +80,13 @@ function stopAudioSession(session: AudioSession): void {
   session.connection.destroy();
 }
 
-export function stopAudio(guildId: string): boolean {
+export async function stopAudio(guildId: string): Promise<boolean> {
   const session = activeAudioSessions.get(guildId);
   if (!session) return false;
 
   stopAudioSession(session);
   activeAudioSessions.delete(guildId);
+  await session.interaction.deleteReply().catch(() => undefined);
   return true;
 }
 
@@ -105,18 +111,23 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
   const channel = interaction.options.getChannel("channel", true);
   const requestedFile = interaction.options.getString("sound", true);
+  const guildId = interaction.guildId;
+  const guild = interaction.guild;
+  if (!guildId || !guild) {
+    await interaction.reply("This command can only be used in a server.");
+    return;
+  }
+  if (isAudioPlaying(guildId)) {
+    await interaction.deferReply();
+    await interaction.deleteReply();
+    return;
+  }
+
   const fileName = audioFiles.find(file => file.toLowerCase() === requestedFile.toLowerCase());
   const audioPath = fileName && path.join(getAudioDirectory(), fileName);
 
   if (!audioPath || !existsSync(audioPath) || !ffmpegPath) {
     await interaction.reply("That sound file is not available.");
-    return;
-  }
-
-  const guildId = interaction.guildId;
-  const guild = interaction.guild;
-  if (!guildId || !guild) {
-    await interaction.reply("This command can only be used in a server.");
     return;
   }
 
@@ -137,12 +148,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     "-ac", "2",
     "pipe:1"
   ], { stdio: ["ignore", "pipe", "ignore"] });
-  const session = { connection, player, ffmpeg };
+  const session = { connection, player, ffmpeg, interaction };
 
   try {
     connection.subscribe(player);
     if (!registerAudioSession(guildId, session)) {
-      await interaction.editReply("Audio is already playing in this server.");
+      await interaction.deleteReply();
       return;
     }
 
