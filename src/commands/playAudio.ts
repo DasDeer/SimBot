@@ -53,14 +53,23 @@ export function registerAudioSession(guildId: string, session: AudioSession): vo
   activeAudioSessions.set(guildId, session);
 }
 
-export function stopAudio(guildId: string): boolean {
-  const session = activeAudioSessions.get(guildId);
-  if (!session) return false;
-
+function stopAudioSession(session: AudioSession): void {
+  if (session.source?.stdout && session.ffmpeg.stdin) {
+    session.source.stdout.unpipe(session.ffmpeg.stdin);
+    session.source.stdout.destroy();
+    session.ffmpeg.stdin.destroy();
+  }
   session.source?.kill();
   session.ffmpeg.kill();
   session.player.stop();
   session.connection.destroy();
+}
+
+export function stopAudio(guildId: string): boolean {
+  const session = activeAudioSessions.get(guildId);
+  if (!session) return false;
+
+  stopAudioSession(session);
   activeAudioSessions.delete(guildId);
   return true;
 }

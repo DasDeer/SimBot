@@ -86,6 +86,16 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   ], { stdio: ["pipe", "pipe", "ignore"] });
 
   try {
+    source.stdout?.on("error", error => {
+      if ((error as NodeJS.ErrnoException).code !== "EPIPE") {
+        console.error("YouTube stream error.", error);
+      }
+    });
+    ffmpeg.stdin?.on("error", error => {
+      if ((error as NodeJS.ErrnoException).code !== "EPIPE") {
+        console.error("FFmpeg input error.", error);
+      }
+    });
     source.stdout?.pipe(ffmpeg.stdin!);
     connection.subscribe(player);
     registerAudioSession(guildId, { connection, player, ffmpeg, source });
@@ -105,6 +115,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     console.error("Failed to play YouTube audio.", error);
     await interaction.editReply("I could not play that YouTube video.");
   } finally {
+    source.stdout?.unpipe(ffmpeg.stdin!);
+    source.stdout?.destroy();
+    ffmpeg.stdin?.destroy();
     source.kill();
     ffmpeg.kill();
     player.stop();
