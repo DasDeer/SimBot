@@ -49,8 +49,17 @@ export type AudioSession = {
 
 const activeAudioSessions = new Map<string, AudioSession>();
 
-export function registerAudioSession(guildId: string, session: AudioSession): void {
+export function registerAudioSession(guildId: string, session: AudioSession): boolean {
+  if (activeAudioSessions.has(guildId)) return false;
+
   activeAudioSessions.set(guildId, session);
+  return true;
+}
+
+export function unregisterAudioSession(guildId: string, session: AudioSession): void {
+  if (activeAudioSessions.get(guildId) === session) {
+    activeAudioSessions.delete(guildId);
+  }
 }
 
 function stopAudioSession(session: AudioSession): void {
@@ -128,10 +137,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     "-ac", "2",
     "pipe:1"
   ], { stdio: ["ignore", "pipe", "ignore"] });
+  const session = { connection, player, ffmpeg };
 
   try {
     connection.subscribe(player);
-    registerAudioSession(guildId, { connection, player, ffmpeg });
+    if (!registerAudioSession(guildId, session)) {
+      await interaction.editReply("Audio is already playing in this server.");
+      return;
+    }
+
     player.play(createAudioResource(ffmpeg.stdout, { inputType: StreamType.Raw }));
 
     await new Promise<void>((resolve, reject) => {
@@ -150,9 +164,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     ffmpeg.kill();
     player.stop();
     connection.destroy();
-    if (activeAudioSessions.get(guildId)?.connection === connection) {
-      activeAudioSessions.delete(guildId);
-    }
+    unregisterAudioSession(guildId, session);
   }
 }
 

@@ -13,7 +13,7 @@ import {
 import ffmpegPath from "ffmpeg-static";
 import { spawn } from "child_process";
 import ytDlp from "youtube-dl-exec";
-import { registerAudioSession, stopAudio } from "./playAudio";
+import { registerAudioSession, unregisterAudioSession } from "./playAudio";
 
 function isYoutubeUrl(value: string): boolean {
   try {
@@ -61,7 +61,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 
   await interaction.deferReply();
-  stopAudio(guildId);
 
   const connection = joinVoiceChannel({
     channelId: channel.id,
@@ -89,6 +88,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     "-ac", "2",
     "pipe:1"
   ], { stdio: ["pipe", "pipe", "ignore"] });
+  const session = { connection, player, ffmpeg, source };
 
   try {
     source.stdout?.on("error", error => {
@@ -103,7 +103,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     });
     source.stdout?.pipe(ffmpeg.stdin!);
     connection.subscribe(player);
-    registerAudioSession(guildId, { connection, player, ffmpeg, source });
+    if (!registerAudioSession(guildId, session)) {
+      await interaction.editReply("Audio is already playing in this server.");
+      return;
+    }
+
     player.play(createAudioResource(ffmpeg.stdout, { inputType: StreamType.Raw }));
 
     await new Promise<void>((resolve, reject) => {
@@ -127,5 +131,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     ffmpeg.kill();
     player.stop();
     connection.destroy();
+    unregisterAudioSession(guildId, session);
   }
 }
