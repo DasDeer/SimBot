@@ -116,9 +116,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.editReply("I could not play that YouTube video.");
   } finally {
     source.stdout?.unpipe(ffmpeg.stdin!);
-    source.stdout?.destroy();
-    ffmpeg.stdin?.destroy();
     source.kill();
+    source.stdout?.destroy();
+    ffmpeg.stdin?.end();
     ffmpeg.kill();
     player.stop();
     connection.destroy();

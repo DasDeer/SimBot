@@ -56,8 +56,9 @@ export function registerAudioSession(guildId: string, session: AudioSession): vo
 function stopAudioSession(session: AudioSession): void {
   if (session.source?.stdout && session.ffmpeg.stdin) {
     session.source.stdout.unpipe(session.ffmpeg.stdin);
+    session.source.kill();
     session.source.stdout.destroy();
-    session.ffmpeg.stdin.destroy();
+    session.ffmpeg.stdin.end();
   }
   session.source?.kill();
   session.ffmpeg.kill();
