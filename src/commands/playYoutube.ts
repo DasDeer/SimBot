@@ -75,6 +75,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     quiet: true,
     noWarnings: true
   });
+  void source.catch(error => {
+    if ((error as { signalCode?: string }).signalCode !== "SIGTERM") {
+      console.error("YouTube downloader failed.", error);
+    }
+  });
   const ffmpeg = spawn(ffmpegPath, [
     "-hide_banner",
     "-loglevel", "error",
