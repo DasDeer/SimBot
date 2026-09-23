@@ -4,7 +4,7 @@ import { commands } from "./commands";
 import { config } from "./config";
 
 const client = new Client({
-  intents: ["Guilds", "GuildMessages", "DirectMessages", "GuildMembers"],
+  intents: ["Guilds", "GuildMessages", "DirectMessages", "GuildMembers", "GuildVoiceStates"],
 });
 
 client.once("clientReady", async () => {
@@ -34,7 +34,11 @@ client.on("interactionCreate", async interaction => {
     await command.execute(interaction);
   } catch (error) {
     console.error(error);
-    await interaction.reply({ content: "There was an error executing this command.", flags: 64 });
+    if (interaction.replied || interaction.deferred) {
+      await interaction.editReply("There was an error executing this command.");
+    } else {
+      await interaction.reply({ content: "There was an error executing this command.", flags: 64 });
+    }
   }
 });
 

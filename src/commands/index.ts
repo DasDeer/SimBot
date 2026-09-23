@@ -6,6 +6,9 @@ import * as grandExchange from "./grandExchange";
 import * as weather from "./weather";
 import * as randomDuck from "./randomDuck";
 import * as randomCat from "./randomCat";
+import * as playAudio from "./playAudio";
+import * as stopAudio from "./stopAudio";
+import * as playYoutube from "./playYoutube";
 
 // Export commands by their .data.name property
 export const commands = [
@@ -16,5 +19,8 @@ export const commands = [
   grandExchange,
   weather,
   randomDuck,
-  randomCat
+  randomCat,
+  playAudio,
+  stopAudio,
+  playYoutube
 ];
