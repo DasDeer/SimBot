@@ -9,6 +9,7 @@ A small Discord bot for managing game servers and a few fun or utility commands.
 - OSRS-related utility commands
 - Random cat and duck commands
 - Weather and other misc helper commands
+- WoW raid-event creation and class/spec signup tracking
 
 ## Requirements
 
@@ -87,7 +88,11 @@ npm run build
 - `.env` is intentionally ignored by Git so secrets do not get published.
 - The bot deploys guild-specific slash commands when it starts. Guild commands usually update quickly.
 - Commands are deployed per guild. Leave a guild's command list empty to enable all commands there, or list specific commands to limit the guild's commands.
-- Supported command names are `friday`, `ip`, `startserver`, `stopserver`, `grand-exchange`, `weather`, `duck`, and `cat`.
+- Use `/create-event` with a name, a date in `YYYY-MM-DD` format, and a time in 24-hour `HH:MM` format. Date and time are displayed exactly as entered. The public event post includes Accept and Remove Me buttons; users choose their class and specialization from private menus, and the post updates with the roster and role totals. The private signup prompt is removed after a successful signup.
+- Users with the Manage Events permission can use `/delete-event` with the event's unique ID to remove the event and its post.
+- Event data is stored in `data/raid-events.json` so signups survive bot restarts. Keep this file with the bot's runtime data.
+- The event uses the guild's custom emojis named `tank`, `healer`, `dps`, and each WoW class (for example, `warlock` and `druid`). These emoji names must exist in the server.
+- Supported command names include `create-event`, `delete-event`, `friday`, `ip`, `startserver`, `stopserver`, `grand-exchange`, `weather`, `duck`, and `cat`.
 - Server paths and ports are expected to be valid for your machine and runtime environment.
 
 ## Project scripts

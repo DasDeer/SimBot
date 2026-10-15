@@ -1,3 +1,5 @@
 # Ignore environment variable files
 .env
 src/utils/guildCommands.local.json
+data/raid-events.json
+data/raid-events.json.tmp

@@ -9,6 +9,8 @@ import * as randomCat from "./randomCat";
 import * as playAudio from "./playAudio";
 import * as stopAudio from "./stopAudio";
 import * as playYoutube from "./playYoutube";
+import * as raidEvent from "./raidEvent";
+import * as deleteRaidEvent from "./deleteRaidEvent";
 
 // Export commands by their .data.name property
 export const commands = [
@@ -22,5 +24,7 @@ export const commands = [
   randomCat,
   playAudio,
   stopAudio,
-  playYoutube
+  playYoutube,
+  raidEvent,
+  deleteRaidEvent
 ];
