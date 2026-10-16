@@ -3,3 +3,4 @@
 src/utils/guildCommands.local.json
 data/raid-events.json
 data/raid-events.json.tmp
+data/audio/*.mp3

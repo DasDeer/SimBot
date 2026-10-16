@@ -17,10 +17,25 @@ import {
 
 type Role = "Tank" | "Healer" | "Melee DPS" | "Ranged DPS";
 
-type Signup = {
+type ClassSignup = {
   className: string;
   specialization: string;
 };
+
+type StatusSignup = {
+  status: "tentative" | "deny";
+};
+
+type Signup = ClassSignup | StatusSignup;
+
+function isClassSignup(signup: Signup): signup is ClassSignup {
+  return "className" in signup && "specialization" in signup;
+}
+
+function isStatusSignup(signup: Signup): signup is StatusSignup {
+  return "status" in signup
+    && (signup.status === "tentative" || signup.status === "deny");
+}
 
 type RaidEvent = {
   id: string;
@@ -171,12 +186,14 @@ function isRaidEvent(value: unknown): value is RaidEvent {
   ) {
     return false;
   }
-  return Object.entries(event.signups).every(([userId, signup]) =>
-  userId.length > 0
-  && !!signup
-  && typeof signup.className === "string"
-  && typeof signup.specialization === "string"
-  );
+  return Object.entries(event.signups).every(([userId, signup]) => {
+    if (userId.length === 0 || !signup || typeof signup !== "object") return false;
+    const candidate = signup as Record<string, unknown>;
+    if (candidate.status === "tentative" || candidate.status === "deny") return true;
+    return candidate.status === undefined
+      && typeof candidate.className === "string"
+      && typeof candidate.specialization === "string";
+  });
 }
 
 function loadEvents(): RaidEvent[] {
@@ -222,17 +239,39 @@ function buttonRow(eventId: string) {
       .setEmoji("✅")
       .setStyle(ButtonStyle.Success),
     new ButtonBuilder()
+      .setCustomId(`${customIdPrefix}:tentative:${eventId}`)
+      .setLabel("Tentative")
+      .setEmoji("❔")
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId(`${customIdPrefix}:deny:${eventId}`)
+      .setLabel("Deny")
+      .setEmoji("❌")
+      .setStyle(ButtonStyle.Danger),
+    new ButtonBuilder()
       .setCustomId(`${customIdPrefix}:remove:${eventId}`)
       .setLabel("Remove Me")
-      .setEmoji("❌")
+      .setEmoji("➖")
       .setStyle(ButtonStyle.Secondary)
   );
 }
 
 function createEventEmbeds(event: RaidEvent, guild: Guild): EmbedBuilder[] {
-  const validSignups = Object.entries(event.signups)
-    .filter(([, signup]) => !!classData[signup.className]?.specializations[signup.specialization]);
-  const signups = validSignups.map(([, signup]) => signup);
+  const validSignups = Object.entries(event.signups).filter(([, signup]) =>
+    isStatusSignup(signup)
+    || (isClassSignup(signup)
+      && !!classData[signup.className]?.specializations[signup.specialization])
+  );
+  const classSignups = validSignups.filter(
+    (entry): entry is [string, ClassSignup] => isClassSignup(entry[1])
+  );
+  const signups = classSignups.map(([, signup]) => signup);
+  const tentativeSignups = validSignups.filter(
+    ([, signup]) => isStatusSignup(signup) && signup.status === "tentative"
+  );
+  const deniedSignups = validSignups.filter(
+    ([, signup]) => isStatusSignup(signup) && signup.status === "deny"
+  );
   const countRole = (role: Role) =>
     signups.filter(signup => classData[signup.className]?.specializations[signup.specialization] === role).length;
 
@@ -242,6 +281,8 @@ function createEventEmbeds(event: RaidEvent, guild: Guild): EmbedBuilder[] {
     .setDescription(`**Date:** ${event.date}\n**Time:** ${event.time}\n**Event ID:** \`${event.id}\``)
     .addFields(
       { name: "👥 Participants", value: String(signups.length), inline: true },
+      { name: "❔ Tentative", value: String(tentativeSignups.length), inline: true },
+      { name: "❌ Deny", value: String(deniedSignups.length), inline: true },
       { name: `${emojiForGuild(guild, "tank")} Tanks`, value: String(countRole("Tank")), inline: true },
       { name: `${emojiForGuild(guild, "healer")} Healers`, value: String(countRole("Healer")), inline: true },
       { name: `${emojiForGuild(guild, "dps")} Melee DPS`, value: String(countRole("Melee DPS")), inline: true },
@@ -249,7 +290,7 @@ function createEventEmbeds(event: RaidEvent, guild: Guild): EmbedBuilder[] {
     );
 
   const embeds = [currentEmbed];
-  let fieldCount = 5;
+  let fieldCount = 7;
   let textLength = currentEmbed.toJSON().title!.length
     + currentEmbed.toJSON().description!.length
     + currentEmbed.toJSON().fields!.reduce(
@@ -257,33 +298,36 @@ function createEventEmbeds(event: RaidEvent, guild: Guild): EmbedBuilder[] {
       0
     );
 
-  for (const [className, classInfo] of Object.entries(classData)) {
-    const classSignups = validSignups
+  const addRosterField = (fieldName: string, fieldValue: string) => {
+    if (fieldCount >= 25 || textLength + fieldName.length + fieldValue.length > 5700) {
+      currentEmbed = new EmbedBuilder()
+        .setColor(0x5865f2)
+        .setTitle(`${event.name} — participants (continued)`)
+        .setDescription(`Event ID: \`${event.id}\``);
+      embeds.push(currentEmbed);
+      fieldCount = 0;
+      textLength = currentEmbed.toJSON().title!.length + currentEmbed.toJSON().description!.length;
+    }
+    currentEmbed.addFields({ name: fieldName, value: fieldValue });
+    fieldCount += 1;
+    textLength += fieldName.length + fieldValue.length;
+  };
+
+  for (const className of Object.keys(classData)) {
+    const entries = classSignups
       .map(([userId, signup], index) => ({ userId, signup, number: index + 1 }))
       .filter(({ signup }) => signup.className === className)
       .map(({ userId, signup, number }) =>
         `**${number}.** <@${userId}> — ${signup.specialization}`
       );
-    if (classSignups.length === 0) continue;
-    const lines = classSignups;
+    if (entries.length === 0) continue;
+    const lines = entries;
     let chunk = "";
     let chunkIndex = 0;
 
     const addChunk = () => {
       const fieldName = `${emojiForGuild(guild, className)} ${className}${chunkIndex > 0 ? " (continued)" : ""}`;
-      const fieldValue = chunk;
-      if (fieldCount >= 25 || textLength + fieldName.length + fieldValue.length > 5700) {
-        currentEmbed = new EmbedBuilder()
-          .setColor(0x5865f2)
-          .setTitle(`${event.name} — participants (continued)`)
-          .setDescription(`Event ID: \`${event.id}\``);
-        embeds.push(currentEmbed);
-        fieldCount = 0;
-        textLength = currentEmbed.toJSON().title!.length + currentEmbed.toJSON().description!.length;
-      }
-      currentEmbed.addFields({ name: fieldName, value: fieldValue });
-      fieldCount += 1;
-      textLength += fieldName.length + fieldValue.length;
+      addRosterField(fieldName, chunk);
       chunk = "";
       chunkIndex += 1;
     };
@@ -296,7 +340,28 @@ function createEventEmbeds(event: RaidEvent, guild: Guild): EmbedBuilder[] {
     addChunk();
   }
 
-  if (signups.length === 0) {
+  for (const [fieldName, entries] of [
+    ["Tentative", tentativeSignups],
+    ["Deny", deniedSignups]
+  ] as const) {
+    let chunk = "";
+    let chunkIndex = 0;
+    const addChunk = () => {
+      addRosterField(`${fieldName}${chunkIndex > 0 ? " (continued)" : ""}`, chunk);
+      chunk = "";
+      chunkIndex += 1;
+    };
+
+    for (const [userId] of entries) {
+      const line = `<@${userId}>`;
+      const nextChunk = chunk ? `${chunk}\n${line}` : line;
+      if (nextChunk.length > 1000) addChunk();
+      chunk = chunk ? `${chunk}\n${line}` : line;
+    }
+    if (chunk) addChunk();
+  }
+
+  if (validSignups.length === 0) {
     currentEmbed.addFields({ name: "Roster", value: "No participants yet." });
   }
 
@@ -429,6 +494,21 @@ export async function handleInteraction(
       content: "This raid event belongs to a different server.",
       flags: 64
     });
+    return;
+  }
+
+  if ((action === "tentative" || action === "deny") && interaction.isButton()) {
+    event.signups[interaction.user.id] = { status: action };
+    const events = loadEvents();
+    const eventIndex = events.findIndex(existingEvent => existingEvent.id === event.id);
+    if (eventIndex < 0) {
+      throw new Error(`Raid event ${event.id} disappeared while saving a signup.`);
+    }
+    events[eventIndex] = event;
+    saveEvents(events);
+
+    await interaction.deferUpdate();
+    await updateEventMessage(interaction, event);
     return;
   }
 

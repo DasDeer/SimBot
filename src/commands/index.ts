@@ -9,6 +9,7 @@ import * as randomCat from "./randomCat";
 import * as playAudio from "./playAudio";
 import * as stopAudio from "./stopAudio";
 import * as playYoutube from "./playYoutube";
+import * as nextAudio from "./nextAudio";
 import * as raidEvent from "./raidEvent";
 import * as deleteRaidEvent from "./deleteRaidEvent";
 
@@ -25,6 +26,7 @@ export const commands = [
   playAudio,
   stopAudio,
   playYoutube,
+  nextAudio,
   raidEvent,
   deleteRaidEvent
 ];

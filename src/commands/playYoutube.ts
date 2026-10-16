@@ -1,6 +1,7 @@
 import {
   ChannelType,
   ChatInputCommandInteraction,
+  MessageFlags,
   SlashCommandBuilder
 } from "discord.js";
 import {
@@ -13,7 +14,13 @@ import {
 import ffmpegPath from "ffmpeg-static";
 import { spawn } from "child_process";
 import ytDlp from "youtube-dl-exec";
-import { isAudioPlaying, registerAudioSession, unregisterAudioSession } from "./playAudio";
+import {
+  AudioSession,
+  isAudioPlaying,
+  queueYoutubeAudio,
+  registerAudioSession,
+  unregisterAudioSession
+} from "./playAudio";
 
 function isYoutubeUrl(value: string): boolean {
   try {
@@ -41,50 +48,21 @@ export const data = new SlashCommandBuilder()
       .setRequired(true)
   );
 
-export async function execute(interaction: ChatInputCommandInteraction) {
-  const channel = interaction.options.getChannel("channel", true);
-  const url = interaction.options.getString("url", true);
-  const guildId = interaction.guildId;
-  const guild = interaction.guild;
+function stopTrack(session: AudioSession): void {
+  session.source?.kill();
+  session.source?.stdout?.destroy();
+  session.ffmpeg?.kill();
+  session.player.stop();
+}
 
-  if (!guildId || !guild) {
-    await interaction.reply("This command can only be used in a server.");
-    return;
-  }
-  if (isAudioPlaying(guildId)) {
-    await interaction.deferReply();
-    await interaction.deleteReply();
-    return;
-  }
-  if (!isYoutubeUrl(url)) {
-    await interaction.reply("Please provide a valid YouTube URL.");
-    return;
-  }
-  if (!ffmpegPath) {
-    await interaction.reply("Audio playback is not available on this system.");
-    return;
-  }
-
-  await interaction.deferReply();
-
-  const connection = joinVoiceChannel({
-    channelId: channel.id,
-    guildId,
-    adapterCreator: guild.voiceAdapterCreator
-  });
-  const player = createAudioPlayer();
+async function playTrack(session: AudioSession, url: string): Promise<void> {
   const source = ytDlp.exec(url, {
     format: "bestaudio/best",
     output: "-",
     quiet: true,
     noWarnings: true
   });
-  void source.catch(error => {
-    if ((error as { signalCode?: string }).signalCode !== "SIGTERM") {
-      console.error("YouTube downloader failed.", error);
-    }
-  });
-  const ffmpeg = spawn(ffmpegPath, [
+  const ffmpeg = spawn(ffmpegPath!, [
     "-hide_banner",
     "-loglevel", "error",
     "-i", "pipe:0",
@@ -93,7 +71,21 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     "-ac", "2",
     "pipe:1"
   ], { stdio: ["pipe", "pipe", "ignore"] });
-  const session = { connection, player, ffmpeg, source, interaction };
+  session.source = source;
+  session.ffmpeg = ffmpeg;
+
+  let skipped = false;
+  const skipCurrent = () => {
+    skipped = true;
+    stopTrack(session);
+  };
+  session.skipCurrent = skipCurrent;
+
+  void source.catch(error => {
+    if (!skipped && (error as { signalCode?: string }).signalCode !== "SIGTERM") {
+      console.error("YouTube downloader failed.", error);
+    }
+  });
 
   try {
     source.stdout?.on("error", error => {
@@ -106,36 +98,124 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         console.error("FFmpeg input error.", error);
       }
     });
-    source.stdout?.pipe(ffmpeg.stdin!);
-    connection.subscribe(player);
-    if (!registerAudioSession(guildId, session)) {
-      await interaction.deleteReply();
-      return;
-    }
-
-    player.play(createAudioResource(ffmpeg.stdout, { inputType: StreamType.Raw }));
 
     await new Promise<void>((resolve, reject) => {
-      player.once(AudioPlayerStatus.Idle, resolve);
-      player.once("error", reject);
-      source.once("error", reject);
-      ffmpeg.once("error", reject);
+      const onIdle = () => resolve();
+      const onError = (error: Error) => skipped ? resolve() : reject(error);
+      session.player.once(AudioPlayerStatus.Idle, onIdle);
+      session.player.once("error", onError);
+      source.once("error", onError);
+      ffmpeg.once("error", onError);
       ffmpeg.once("close", code => {
-        if (code !== 0) reject(new Error(`FFmpeg exited with code ${code}`));
+        if (code !== 0 && !skipped) {
+          reject(new Error(`FFmpeg exited with code ${code}`));
+        }
       });
+      source.stdout?.pipe(ffmpeg.stdin!);
+      session.player.play(createAudioResource(ffmpeg.stdout, { inputType: StreamType.Raw }));
     });
-    await interaction.deleteReply();
-  } catch (error) {
-    console.error("Failed to play YouTube audio.", error);
-    await interaction.editReply("I could not play that YouTube video.");
   } finally {
+    session.player.removeAllListeners(AudioPlayerStatus.Idle);
+    session.player.removeAllListeners("error");
     source.stdout?.unpipe(ffmpeg.stdin!);
     source.kill();
     source.stdout?.destroy();
     ffmpeg.stdin?.end();
     ffmpeg.kill();
-    player.stop();
-    connection.destroy();
+    if (session.source === source) session.source = undefined;
+    if (session.ffmpeg === ffmpeg) session.ffmpeg = undefined;
+    if (session.skipCurrent === skipCurrent) session.skipCurrent = undefined;
+  }
+}
+
+async function playQueue(
+  guildId: string,
+  session: AudioSession,
+  firstUrl: string
+): Promise<void> {
+  let url: string | undefined = firstUrl;
+  try {
+    while (url) {
+      try {
+        await playTrack(session, url);
+      } catch (error) {
+        console.error("Failed to play YouTube audio.", error);
+      }
+      url = session.queue?.shift();
+    }
+  } finally {
+    stopTrack(session);
+    session.connection.destroy();
     unregisterAudioSession(guildId, session);
   }
+}
+
+export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
+  const channel = interaction.options.getChannel("channel", true);
+  const url = interaction.options.getString("url", true);
+  const guildId = interaction.guildId;
+  const guild = interaction.guild;
+
+  if (!guildId || !guild) {
+    await interaction.reply("This command can only be used in a server.");
+    return;
+  }
+  if (!isYoutubeUrl(url)) {
+    await interaction.reply("Please provide a valid YouTube URL.");
+    return;
+  }
+  if (!ffmpegPath) {
+    await interaction.reply("Audio playback is not available on this system.");
+    return;
+  }
+
+  if (isAudioPlaying(guildId)) {
+    const position = queueYoutubeAudio(guildId, url);
+    if (position === undefined) {
+      await interaction.reply({
+        content: "Audio is already playing. YouTube tracks can only be queued during YouTube playback.",
+        flags: MessageFlags.Ephemeral
+      });
+      return;
+    }
+    await interaction.reply({
+      content: `Added to the YouTube queue at position ${position}.`,
+      flags: MessageFlags.Ephemeral
+    });
+    return;
+  }
+
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  const connection = joinVoiceChannel({
+    channelId: channel.id,
+    guildId,
+    adapterCreator: guild.voiceAdapterCreator
+  });
+  const session: AudioSession = {
+    connection,
+    player: createAudioPlayer(),
+    queue: []
+  };
+  connection.subscribe(session.player);
+
+  if (!registerAudioSession(guildId, session)) {
+    connection.destroy();
+    const position = queueYoutubeAudio(guildId, url);
+    await interaction.editReply(
+      position === undefined
+        ? "Audio is already playing. YouTube tracks can only be queued during YouTube playback."
+        : `Added to the YouTube queue at position ${position}.`
+    );
+    return;
+  }
+
+  try {
+    await interaction.editReply("Started YouTube playback.");
+  } catch (error) {
+    unregisterAudioSession(guildId, session);
+    connection.destroy();
+    throw error;
+  }
+
+  void playQueue(guildId, session, url);
 }

@@ -43,9 +43,11 @@ const audioFiles = getAudioFiles();
 export type AudioSession = {
   connection: ReturnType<typeof joinVoiceChannel>;
   player: ReturnType<typeof createAudioPlayer>;
-  ffmpeg: ReturnType<typeof spawn>;
-  interaction: ChatInputCommandInteraction;
+  ffmpeg?: ReturnType<typeof spawn>;
+  interaction?: ChatInputCommandInteraction;
   source?: ChildProcess;
+  queue?: string[];
+  skipCurrent?: () => void;
 };
 
 const activeAudioSessions = new Map<string, AudioSession>();
@@ -68,14 +70,15 @@ export function unregisterAudioSession(guildId: string, session: AudioSession): 
 }
 
 function stopAudioSession(session: AudioSession): void {
-  if (session.source?.stdout && session.ffmpeg.stdin) {
+  session.queue?.splice(0);
+  if (session.source?.stdout && session.ffmpeg?.stdin) {
     session.source.stdout.unpipe(session.ffmpeg.stdin);
     session.source.kill();
     session.source.stdout.destroy();
     session.ffmpeg.stdin.end();
   }
   session.source?.kill();
-  session.ffmpeg.kill();
+  session.ffmpeg?.kill();
   session.player.stop();
   session.connection.destroy();
 }
@@ -86,7 +89,23 @@ export async function stopAudio(guildId: string): Promise<boolean> {
 
   stopAudioSession(session);
   activeAudioSessions.delete(guildId);
-  await session.interaction.deleteReply().catch(() => undefined);
+  await session.interaction?.deleteReply().catch(() => undefined);
+  return true;
+}
+
+export function queueYoutubeAudio(guildId: string, url: string): number | undefined {
+  const session = activeAudioSessions.get(guildId);
+  if (!session?.queue) return undefined;
+
+  session.queue.push(url);
+  return session.queue.length;
+}
+
+export function skipYoutubeAudio(guildId: string): boolean {
+  const session = activeAudioSessions.get(guildId);
+  if (!session?.queue?.length || !session.skipCurrent) return false;
+
+  session.skipCurrent();
   return true;
 }
 
@@ -178,4 +197,3 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     unregisterAudioSession(guildId, session);
   }
 }
-
