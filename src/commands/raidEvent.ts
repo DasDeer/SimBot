@@ -466,8 +466,7 @@ async function updateEventMessage(
   if (!channel?.isTextBased() || !("messages" in channel)) {
     throw new Error("The event's channel is no longer available.");
   }
-  const message = await channel.messages.fetch(event.messageId);
-  await message.edit({
+  await channel.messages.edit(event.messageId, {
     embeds: createEventEmbeds(event, interaction.guild),
     components: [buttonRow(event.id)]
   });
